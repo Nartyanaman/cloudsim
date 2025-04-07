@@ -169,19 +169,35 @@ public class CloudSimExample {
         Log.printLine("Cloudlet ID" + indent + "STATUS" + indent + "Data center ID" + indent + "VM ID" + indent + "Time" + indent + "Start Time" + indent + "Finish Time");
 
         DecimalFormat dft = new DecimalFormat("###.##");
+        StringBuilder outputForLLM = new StringBuilder(); // collect output for LLM
+
         for (Cloudlet value : list) {
             cloudlet = value;
-            Log.print(indent + cloudlet.getCloudletId() + indent + indent);
+            StringBuilder line = new StringBuilder();
 
+            line.append(indent).append(cloudlet.getCloudletId()).append(indent).append(indent);
             if (cloudlet.getStatus() == Cloudlet.SUCCESS) {
-                Log.print("SUCCESS");
+                line.append("SUCCESS");
+                line.append(indent).append(indent).append(cloudlet.getResourceId());
+                line.append(indent).append(indent).append(indent).append(cloudlet.getVmId());
+                line.append(indent).append(indent).append(dft.format(cloudlet.getActualCPUTime()));
+                line.append(indent).append(indent).append(dft.format(cloudlet.getExecStartTime()));
+                line.append(indent).append(indent).append(dft.format(cloudlet.getFinishTime()));
 
-                Log.printLine(indent + indent + cloudlet.getResourceId()
-                        + indent + indent + indent + cloudlet.getVmId()
-                        + indent + indent + dft.format(cloudlet.getActualCPUTime())
-                        + indent + indent + dft.format(cloudlet.getExecStartTime())
-                        + indent + indent + dft.format(cloudlet.getFinishTime()));
+                Log.printLine(line.toString());
+                outputForLLM.append(line).append("\n");
             }
         }
+
+        // Add LLM feedback at the end
+        try {
+            Log.printLine("\n🤖 Asking Ollama for feedback...");
+            String feedback = LLMService.getLLMFeedback(outputForLLM.toString());
+            Log.printLine("\n🧠 Ollama's Feedback:");
+            Log.printLine(feedback);
+        } catch (Exception e) {
+            Log.printLine("❌ Could not get feedback from LLM: " + e.getMessage());
+        }
     }
+
 }
